@@ -1,0 +1,85 @@
+//volatile long pulsos=0;
+double error,Setup1,Setup,RPM_Motor=0;
+double ei,ep,ed,kp=.4,ki=.05,kd=.09;
+double PWM;
+int pinSalida=D0;
+
+void setup() {
+ pinMode(pinSalida,OUTPUT);
+  Serial.begin(57600);
+attachInterrupt(D2, velocidad, RISING);
+noInterrupts();
+Setup1=300; //referencia en rpm
+}
+
+void loop() {
+  interrupts();
+  delay(99);
+  noInterrupts();
+  
+  RPM_Motor = pulsos*150;
+  pulsos=0;
+  Setup=Setup1;
+ 
+ Serial.print("Velocidad del motor:  ");
+ Serial.println(RPM_Motor);
+  RPM_Motor = map(RPM_Motor, 0.0, 2250.0, 0.0, 255.0);
+  Setup = map(Setup, 0.0, 2250.0, 0.0, 255.0);
+  error = Setup - RPM_Motor; //Calculo la diferencia entre la velocidad deseada y la real
+
+  
+  calcularError();
+
+  PWM=PWM + error;
+  
+  imprimirResultados();
+  
+  aplicarPWM();
+}
+
+
+void velocidad()
+{
+  pulsos++;
+}
+
+
+void aplicarPWM()
+{
+   analogWrite(pinSalida,PWM);
+ 
+if(PWM>255)
+{
+ analogWrite(pinSalida,255);
+}
+if(PWM<40)
+{
+ analogWrite(pinSalida,40);
+}  
+}
+
+void imprimirResultados()
+{
+     Serial.print("Relacion de RPM a PWM:  ");
+  Serial.println(RPM_Motor);
+  Serial.print("Relacion de Setup a PWM:  ");
+  Serial.println(Setup);
+  Serial.print("ERROR:  ");
+  Serial.println(error);
+    Serial.print("error proporcional:  ");
+  Serial.println(ep);
+  Serial.print("error integral:  ");
+  Serial.println(ei);
+  Serial.print("erro derivativo:  ");
+  Serial.println(ed);
+  Serial.print("PWM inyectado:  ");
+  Serial.println(PWM);  
+}
+
+void calcularError()
+{
+     ep=kp*error;
+  ei=(error+ei)*ki;
+  ed=(error-ed)*kd;
+  error = ep+ei+ed; 
+}2b0024001347343438323536
